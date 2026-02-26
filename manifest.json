@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "GPT Bookmarks",
+  "version": "0.1.0",
+  "description": "Bookmark and hide messages in long ChatGPT conversations.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://chat.openai.com/*",
+    "https://chatgpt.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chat.openai.com/*",
+        "https://chatgpt.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
