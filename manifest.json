@@ -17,6 +17,12 @@
         "https://chatgpt.com/*"
       ],
       "js": [
+        "content/constants.js",
+        "content/utils.js",
+        "content/storage.js",
+        "content/message-manager.js",
+        "content/bookmark-panel.js",
+        "content/app.js",
         "content.js"
       ],
       "css": [
