@@ -3,6 +3,24 @@
 
   const ns = (globalThis.GPTBM = globalThis.GPTBM || {});
 
+  function formatRoleLabel(role) {
+    const normalized = String(role || "")
+      .trim()
+      .toLowerCase();
+
+    if (normalized === "chatgpt said" || normalized === "chatgpt") {
+      return "GPT";
+    }
+    if (normalized === "you said" || normalized === "user") {
+      return "You";
+    }
+    if (normalized === "assistant") {
+      return "system";
+    }
+
+    return role || "GPT";
+  }
+
   class BookmarkPanel {
     constructor(options) {
       this.state = options.state;
@@ -14,6 +32,20 @@
       this.panelList = null;
       this.panelCount = null;
       this.panelEmpty = null;
+      this.panelHeader = null;
+
+      this.dragState = {
+        active: false,
+        pointerId: null,
+        offsetX: 0,
+        offsetY: 0
+      };
+
+      this.isResizeListenerAttached = false;
+      this.boundHandleDragStart = (event) => this.handleDragStart(event);
+      this.boundHandleDragMove = (event) => this.handleDragMove(event);
+      this.boundHandleDragEnd = (event) => this.handleDragEnd(event);
+      this.boundHandleResize = () => this.clampPanelToViewport();
     }
 
     ensurePanel() {
@@ -39,6 +71,109 @@
       this.panelList = root.querySelector("#gpt-bm-list");
       this.panelCount = root.querySelector("#gpt-bm-count");
       this.panelEmpty = root.querySelector("#gpt-bm-empty");
+      this.panelHeader = root.querySelector(".gpt-bm-panel-header");
+      this.enableDragging();
+    }
+
+    enableDragging() {
+      if (!this.panelHeader || this.panelHeader.dataset.gptBmDragReady === "1") {
+        return;
+      }
+
+      this.panelHeader.dataset.gptBmDragReady = "1";
+      this.panelHeader.addEventListener("pointerdown", this.boundHandleDragStart);
+      this.panelHeader.addEventListener("pointermove", this.boundHandleDragMove);
+      this.panelHeader.addEventListener("pointerup", this.boundHandleDragEnd);
+      this.panelHeader.addEventListener("pointercancel", this.boundHandleDragEnd);
+
+      if (!this.isResizeListenerAttached) {
+        window.addEventListener("resize", this.boundHandleResize);
+        this.isResizeListenerAttached = true;
+      }
+    }
+
+    setPanelPosition(left, top) {
+      if (!this.panelRoot) {
+        return;
+      }
+
+      const maxLeft = Math.max(0, window.innerWidth - this.panelRoot.offsetWidth);
+      const maxTop = Math.max(0, window.innerHeight - this.panelRoot.offsetHeight);
+      const clampedLeft = Math.min(Math.max(0, left), maxLeft);
+      const clampedTop = Math.min(Math.max(0, top), maxTop);
+
+      this.panelRoot.style.left = `${Math.round(clampedLeft)}px`;
+      this.panelRoot.style.top = `${Math.round(clampedTop)}px`;
+    }
+
+    clampPanelToViewport() {
+      if (!this.panelRoot) {
+        return;
+      }
+
+      const currentLeft = Number.parseFloat(this.panelRoot.style.left);
+      const currentTop = Number.parseFloat(this.panelRoot.style.top);
+      if (!Number.isFinite(currentLeft) || !Number.isFinite(currentTop)) {
+        return;
+      }
+
+      this.setPanelPosition(currentLeft, currentTop);
+    }
+
+    handleDragStart(event) {
+      if (!this.panelRoot || !this.panelHeader || event.button !== 0) {
+        return;
+      }
+
+      event.preventDefault();
+      const rect = this.panelRoot.getBoundingClientRect();
+      this.dragState.active = true;
+      this.dragState.pointerId = event.pointerId;
+      this.dragState.offsetX = event.clientX - rect.left;
+      this.dragState.offsetY = event.clientY - rect.top;
+      this.panelRoot.classList.add("gpt-bm-dragging");
+
+      if (typeof this.panelHeader.setPointerCapture === "function") {
+        this.panelHeader.setPointerCapture(event.pointerId);
+      }
+    }
+
+    handleDragMove(event) {
+      if (
+        !this.dragState.active ||
+        event.pointerId !== this.dragState.pointerId ||
+        !this.panelRoot
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      const left = event.clientX - this.dragState.offsetX;
+      const top = event.clientY - this.dragState.offsetY;
+      this.setPanelPosition(left, top);
+    }
+
+    handleDragEnd(event) {
+      if (
+        !this.dragState.active ||
+        event.pointerId !== this.dragState.pointerId ||
+        !this.panelHeader
+      ) {
+        return;
+      }
+
+      if (
+        typeof this.panelHeader.hasPointerCapture === "function" &&
+        this.panelHeader.hasPointerCapture(event.pointerId)
+      ) {
+        this.panelHeader.releasePointerCapture(event.pointerId);
+      }
+
+      this.dragState.active = false;
+      this.dragState.pointerId = null;
+      if (this.panelRoot) {
+        this.panelRoot.classList.remove("gpt-bm-dragging");
+      }
     }
 
     buildBookmarkItem(bookmark) {
@@ -61,7 +196,7 @@
         ? `#${Number(bookmark.index) + 1}`
         : "#?";
       const pieces = [
-        bookmark.role || "assistant",
+        formatRoleLabel(bookmark.role),
         indexLabel,
         ns.utils.formatTimestamp(bookmark.createdAt)
       ].filter(Boolean);
@@ -70,7 +205,7 @@
       const removeButton = document.createElement("button");
       removeButton.type = "button";
       removeButton.className = "gpt-bm-item-remove";
-      removeButton.textContent = "✕";
+      removeButton.textContent = "🗑";
       removeButton.title = "Remove bookmark";
       removeButton.addEventListener("click", async (event) => {
         event.stopPropagation();

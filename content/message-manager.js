@@ -11,23 +11,25 @@
           .querySelector("[data-message-author-role]")
           .getAttribute("data-message-author-role"));
 
-    if (
-      explicitRole === "assistant" ||
-      explicitRole === "user" ||
-      explicitRole === "system"
-    ) {
+    if (explicitRole === "assistant") {
+      return "system";
+    }
+    if (explicitRole === "system" || explicitRole === "user") {
       return explicitRole;
     }
 
     const ariaLabel = (node.getAttribute("aria-label") || "").toLowerCase();
     if (ariaLabel.includes("assistant")) {
-      return "assistant";
+      return "system";
+    }
+    if (ariaLabel.includes("system")) {
+      return "system";
     }
     if (ariaLabel.includes("user") || ariaLabel.includes("you")) {
       return "user";
     }
 
-    return index % 2 === 0 ? "assistant" : "user";
+    return index % 2 === 0 ? "system" : "user";
   }
 
   function deriveMessageKey(node, index, role, preview) {
@@ -122,10 +124,50 @@
       const button = document.createElement("button");
       button.type = "button";
       button.className = `gpt-bm-btn gpt-bm-btn-${kind}`;
-      button.textContent = kind === "bookmark" ? "★" : "⊖";
+      button.textContent = kind === "bookmark" ? "★" : "🗑";
       button.title =
-        kind === "bookmark" ? "Bookmark message" : "Hide message locally";
+        kind === "bookmark" ? "Bookmark message" : "Remove message locally";
       return button;
+    }
+
+    findNativeActionHost(node) {
+      const anchorSelectors = [
+        'button[aria-label*="Copy"]',
+        'button[aria-label*="Edit"]',
+        'button[aria-label*="Regenerate"]',
+        'button[aria-label*="Like"]',
+        'button[aria-label*="Dislike"]',
+        'button[data-testid*="copy"]',
+        'button[data-testid*="edit"]'
+      ];
+
+      let anchorButton = null;
+      for (const selector of anchorSelectors) {
+        anchorButton = node.querySelector(selector);
+        if (anchorButton) {
+          break;
+        }
+      }
+
+      if (!anchorButton) {
+        return null;
+      }
+
+      let current = anchorButton.parentElement;
+      while (current && current !== node) {
+        const display = window.getComputedStyle(current).display;
+        const directButtonCount = current.querySelectorAll(":scope > button").length;
+        if (
+          (display === "flex" || display === "inline-flex") &&
+          directButtonCount >= 1 &&
+          directButtonCount <= 10
+        ) {
+          return current;
+        }
+        current = current.parentElement;
+      }
+
+      return null;
     }
 
     buildMessageMeta(node, index) {
@@ -150,16 +192,16 @@
     }
 
     attachControlsToNode(node, meta) {
-      let controls = node.querySelector(":scope > .gpt-bm-controls");
+      let controls = node.querySelector('.gpt-bm-controls[data-gpt-bm-owned="1"]');
       if (!controls) {
         controls = document.createElement("div");
         controls.className = "gpt-bm-controls";
+        controls.dataset.gptBmOwned = "1";
 
         const bookmarkButton = this.createControlButton("bookmark");
         const hideButton = this.createControlButton("hide");
 
         controls.append(bookmarkButton, hideButton);
-        node.appendChild(controls);
 
         bookmarkButton.addEventListener("click", async (event) => {
           event.stopPropagation();
@@ -178,6 +220,15 @@
           }
           await this.onHideMessage({ node, messageKey });
         });
+      }
+
+      const nativeActionHost = this.findNativeActionHost(node);
+      const shouldInline = Boolean(nativeActionHost);
+      controls.classList.toggle("gpt-bm-controls-inline", shouldInline);
+
+      const targetParent = nativeActionHost || node;
+      if (controls.parentElement !== targetParent) {
+        targetParent.appendChild(controls);
       }
 
       const bookmarkButton = controls.querySelector(".gpt-bm-btn-bookmark");

@@ -69,7 +69,7 @@
           conversationId: this.state.conversationId,
           messageKey,
           textPreview: node.dataset.gptBmPreview || "",
-          role: node.dataset.gptBmRole || "assistant",
+          role: node.dataset.gptBmRole || "system",
           index: Number(node.dataset.gptBmIndex || 0),
           createdAt: Date.now()
         });
