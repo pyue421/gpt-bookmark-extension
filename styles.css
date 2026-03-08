@@ -60,8 +60,8 @@
 
 .gpt-bm-count {
   border-radius: 999px;
-  background: var(--gpt-bm-accent-soft);
-  color: var(--gpt-bm-accent);
+  background: #efefef;
+  color: #5D5D5D;
   font-size: 11px;
   min-width: 28px;
   line-height: 22px;
@@ -140,21 +140,29 @@
 
 .gpt-bm-item-remove {
   appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.16);
   color: #d7ddeb;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 8px;
   cursor: pointer;
-  width: 24px;
-  height: 24px;
-  font-size: 12px;
-  line-height: 1;
   padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  position: relative;
 }
 
 .gpt-bm-item-remove:hover {
-  border-color: rgba(255, 255, 255, 0.3);
   color: #ffffff;
+}
+
+.gpt-bm-item-remove-icon {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.gpt-bm-item-remove-icon path {
+  fill: currentColor;
 }
 
 html:not(.dark) #gpt-bm-panel-root {
@@ -198,13 +206,10 @@ html:not(.dark) #gpt-bm-panel-root .gpt-bm-item-content:hover .gpt-bm-assistant-
 }
 
 html:not(.dark) #gpt-bm-panel-root .gpt-bm-item-remove {
-  border-color: rgba(15, 23, 42, 0.18);
   color: #334155;
-  background: rgba(15, 23, 42, 0.02);
 }
 
 html:not(.dark) #gpt-bm-panel-root .gpt-bm-item-remove:hover {
-  border-color: rgba(15, 23, 42, 0.28);
   color: #0f172a;
 }
 
@@ -285,7 +290,8 @@ html:not(.dark) .gpt-bm-btn.gpt-bm-active {
   background: #E8E8E8;
 }
 
-.gpt-bm-btn::after {
+.gpt-bm-btn::after,
+.gpt-bm-item-remove::after {
   content: attr(data-gpt-bm-tooltip);
   position: absolute;
   left: 50%;
@@ -308,10 +314,22 @@ html:not(.dark) .gpt-bm-btn.gpt-bm-active {
   z-index: 1000;
 }
 
+.gpt-bm-item-remove::after {
+  left: auto;
+  right: 0;
+  transform: translateY(-4px);
+}
+
 .gpt-bm-btn:hover::after,
 .gpt-bm-btn:focus-visible::after {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+.gpt-bm-item-remove:hover::after,
+.gpt-bm-item-remove:focus-visible::after {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .gpt-bm-icon {

@@ -11,6 +11,14 @@
     }
   }
 
+  function formatPreviewLabel(text, label) {
+    const normalized = String(text || "")
+      .replace(/^\s*(you said|chatgpt said|you|chatgpt)\s*:\s*/i, "")
+      .trim();
+
+    return normalized ? `${label}: ${normalized}` : `${label}:`;
+  }
+
   function formatRoleLabel(role) {
     const normalized = String(role || "")
       .trim()
@@ -197,41 +205,36 @@
       // User message preview
       const userPreview = document.createElement("div");
       userPreview.className = "gpt-bm-item-preview gpt-bm-user-msg";
-      userPreview.textContent = bookmark.textPreview || "(No preview)";
+      userPreview.textContent = bookmark.textPreview
+        ? formatPreviewLabel(bookmark.textPreview, "You")
+        : "You:";
 
       // Assistant response preview
       if (bookmark.assistantPreview) {
         const assistantPreview = document.createElement("div");
         assistantPreview.className = "gpt-bm-item-preview gpt-bm-assistant-msg";
-        assistantPreview.textContent = bookmark.assistantPreview;
+        assistantPreview.textContent = formatPreviewLabel(
+          bookmark.assistantPreview,
+          "ChatGPT"
+        );
         content.append(userPreview, assistantPreview);
       } else {
         content.append(userPreview);
       }
 
-      const meta = document.createElement("div");
-      meta.className = "gpt-bm-item-meta";
-      const indexLabel = Number.isFinite(Number(bookmark.index))
-        ? `#${Number(bookmark.index) + 1}`
-        : "#?";
-      const pieces = [
-        "Q&A",
-        indexLabel,
-        ns.utils.formatTimestamp(bookmark.createdAt)
-      ].filter(Boolean);
-      meta.textContent = pieces.join(" • ");
-
       const removeButton = document.createElement("button");
       removeButton.type = "button";
       removeButton.className = "gpt-bm-item-remove";
-      removeButton.textContent = "🗑";
-      removeButton.title = "Remove bookmark";
+      removeButton.setAttribute("aria-label", "Remove bookmark");
+      removeButton.dataset.gptBmTooltip = "Remove";
+      removeButton.innerHTML =
+        '<svg class="gpt-bm-item-remove-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+        '<path d="M8 3.75H16C17.7949 3.75 19.25 5.20507 19.25 7V20.0326C19.25 20.6332 18.5771 20.9917 18.0766 20.6564L12 16.5858L5.92341 20.6564C5.42291 20.9917 4.75 20.6332 4.75 20.0326V7C4.75 5.20508 6.20508 3.75 8 3.75Z"></path>' +
+        "</svg>";
       removeButton.addEventListener("click", async (event) => {
         event.stopPropagation();
         await this.onRemoveBookmark(bookmark.messageKey);
       });
-
-      content.append(meta);
       item.append(content, removeButton);
 
       return item;
