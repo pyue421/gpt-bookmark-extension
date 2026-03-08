@@ -16,6 +16,10 @@
       .replace(/^\s*(you said|chatgpt said|you|chatgpt)\s*:\s*/i, "")
       .trim();
 
+    if (!label) {
+      return normalized;
+    }
+
     return normalized ? `${label}: ${normalized}` : `${label}:`;
   }
 
@@ -206,8 +210,8 @@
       const userPreview = document.createElement("div");
       userPreview.className = "gpt-bm-item-preview gpt-bm-user-msg";
       userPreview.textContent = bookmark.textPreview
-        ? formatPreviewLabel(bookmark.textPreview, "You")
-        : "You:";
+        ? formatPreviewLabel(bookmark.textPreview, "")
+        : "(No preview)";
 
       // Assistant response preview
       if (bookmark.assistantPreview) {

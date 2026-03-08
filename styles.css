@@ -40,7 +40,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 12px;
+  padding: 8px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   cursor: grab;
   user-select: none;
@@ -54,7 +54,6 @@
 .gpt-bm-title {
   font-family: Helvetica, Arial, sans-serif;
   font-size: 13px;
-  letter-spacing: 0.08em;
   font-weight: 700;
 }
 
