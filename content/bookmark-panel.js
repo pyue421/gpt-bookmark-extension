@@ -186,9 +186,20 @@
       content.className = "gpt-bm-item-content";
       content.addEventListener("click", () => this.onJumpToBookmark(bookmark));
 
-      const preview = document.createElement("div");
-      preview.className = "gpt-bm-item-preview";
-      preview.textContent = bookmark.textPreview || "(No preview)";
+      // User message preview
+      const userPreview = document.createElement("div");
+      userPreview.className = "gpt-bm-item-preview gpt-bm-user-msg";
+      userPreview.textContent = bookmark.textPreview || "(No preview)";
+
+      // Assistant response preview
+      if (bookmark.assistantPreview) {
+        const assistantPreview = document.createElement("div");
+        assistantPreview.className = "gpt-bm-item-preview gpt-bm-assistant-msg";
+        assistantPreview.textContent = bookmark.assistantPreview;
+        content.append(userPreview, assistantPreview);
+      } else {
+        content.append(userPreview);
+      }
 
       const meta = document.createElement("div");
       meta.className = "gpt-bm-item-meta";
@@ -196,7 +207,7 @@
         ? `#${Number(bookmark.index) + 1}`
         : "#?";
       const pieces = [
-        formatRoleLabel(bookmark.role),
+        "Q&A",
         indexLabel,
         ns.utils.formatTimestamp(bookmark.createdAt)
       ].filter(Boolean);
@@ -212,7 +223,7 @@
         await this.onRemoveBookmark(bookmark.messageKey);
       });
 
-      content.append(preview, meta);
+      content.append(meta);
       item.append(content, removeButton);
 
       return item;
@@ -222,6 +233,19 @@
       this.ensurePanel();
 
       if (!this.panelList || !this.panelEmpty || !this.panelCount) {
+        return;
+      }
+
+      // Check if extension context is valid
+      const isContextValid = !!(chrome.runtime && chrome.runtime.id);
+      if (!isContextValid) {
+        this.panelEmpty.textContent = "Extension reloaded. Please refresh the page.";
+        this.panelEmpty.hidden = false;
+        this.panelList.innerHTML = "";
+        this.panelCount.textContent = "0";
+        if (this.panelNode) {
+          this.panelNode.classList.add("gpt-bm-panel-disabled");
+        }
         return;
       }
 

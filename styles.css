@@ -119,6 +119,18 @@
   overflow: hidden;
 }
 
+.gpt-bm-user-msg {
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.gpt-bm-assistant-msg {
+  color: var(--gpt-bm-muted);
+  -webkit-line-clamp: 3;
+  padding-left: 8px;
+  border-left: 2px solid var(--gpt-bm-accent-soft);
+}
+
 .gpt-bm-item-meta {
   font-size: 11px;
   line-height: 1.4;
@@ -173,8 +185,16 @@ html:not(.dark) #gpt-bm-panel-root .gpt-bm-item-preview {
   color: #0f172a;
 }
 
+html:not(.dark) #gpt-bm-panel-root .gpt-bm-assistant-msg {
+  color: var(--gpt-bm-muted);
+}
+
 html:not(.dark) #gpt-bm-panel-root .gpt-bm-item-content:hover .gpt-bm-item-preview {
   color: #020617;
+}
+
+html:not(.dark) #gpt-bm-panel-root .gpt-bm-item-content:hover .gpt-bm-assistant-msg {
+  color: #475569;
 }
 
 html:not(.dark) #gpt-bm-panel-root .gpt-bm-item-remove {
@@ -186,6 +206,20 @@ html:not(.dark) #gpt-bm-panel-root .gpt-bm-item-remove {
 html:not(.dark) #gpt-bm-panel-root .gpt-bm-item-remove:hover {
   border-color: rgba(15, 23, 42, 0.28);
   color: #0f172a;
+}
+
+html:not(.dark) .gpt-bm-btn {
+  color: #6e6e80;
+}
+
+html:not(.dark) .gpt-bm-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #2d2d2d;
+}
+
+html:not(.dark) .gpt-bm-btn.gpt-bm-active {
+  color: var(--gpt-bm-accent);
+  background: rgba(14, 159, 130, 0.12);
 }
 
 .gpt-bm-message {
@@ -222,27 +256,30 @@ html:not(.dark) #gpt-bm-panel-root .gpt-bm-item-remove:hover {
 
 .gpt-bm-btn {
   appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(16, 19, 25, 0.85);
-  color: #dce5f7;
-  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #ececec;
+  border-radius: 6px;
   cursor: pointer;
-  width: 28px;
-  height: 28px;
-  font-size: 14px;
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
   line-height: 1;
   padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
 }
 
 .gpt-bm-btn:hover {
-  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
 
 .gpt-bm-btn.gpt-bm-active {
-  border-color: var(--gpt-bm-accent);
   color: var(--gpt-bm-accent);
-  background: rgba(10, 25, 21, 0.95);
+  background: rgba(78, 201, 167, 0.15);
 }
 
 .gpt-bm-hidden {

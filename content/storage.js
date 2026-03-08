@@ -3,29 +3,55 @@
 
   const ns = (globalThis.GPTBM = globalThis.GPTBM || {});
 
+  function isExtensionContextValid() {
+    try {
+      return !!(chrome.runtime && chrome.runtime.id);
+    } catch (e) {
+      return false;
+    }
+  }
+
   function storageGet(key) {
     return new Promise((resolve, reject) => {
-      chrome.storage.local.get([key], (result) => {
-        const error = chrome.runtime && chrome.runtime.lastError;
-        if (error) {
-          reject(new Error(error.message));
-          return;
-        }
-        resolve(result[key]);
-      });
+      if (!isExtensionContextValid()) {
+        resolve(null);
+        return;
+      }
+
+      try {
+        chrome.storage.local.get([key], (result) => {
+          const error = chrome.runtime && chrome.runtime.lastError;
+          if (error) {
+            reject(new Error(error.message));
+            return;
+          }
+          resolve(result[key]);
+        });
+      } catch (e) {
+        resolve(null);
+      }
     });
   }
 
   function storageSet(payload) {
     return new Promise((resolve, reject) => {
-      chrome.storage.local.set(payload, () => {
-        const error = chrome.runtime && chrome.runtime.lastError;
-        if (error) {
-          reject(new Error(error.message));
-          return;
-        }
+      if (!isExtensionContextValid()) {
         resolve();
-      });
+        return;
+      }
+
+      try {
+        chrome.storage.local.set(payload, () => {
+          const error = chrome.runtime && chrome.runtime.lastError;
+          if (error) {
+            reject(new Error(error.message));
+            return;
+          }
+          resolve();
+        });
+      } catch (e) {
+        resolve();
+      }
     });
   }
 

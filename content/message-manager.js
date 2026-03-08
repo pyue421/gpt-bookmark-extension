@@ -126,7 +126,7 @@
       button.className = `gpt-bm-btn gpt-bm-btn-${kind}`;
       button.textContent = kind === "bookmark" ? "★" : "🗑";
       button.title =
-        kind === "bookmark" ? "Bookmark message" : "Remove message locally";
+        kind === "bookmark" ? "Bookmark Q&A pair" : "Remove Q&A pair locally";
       return button;
     }
 
@@ -192,6 +192,14 @@
     }
 
     attachControlsToNode(node, meta) {
+      // Only show controls for user messages
+      const isUserMessage = meta.role === "user";
+
+      // Don't add controls to assistant messages
+      if (!isUserMessage) {
+        return;
+      }
+
       let controls = node.querySelector('.gpt-bm-controls[data-gpt-bm-owned="1"]');
       if (!controls) {
         controls = document.createElement("div");
@@ -199,10 +207,6 @@
         controls.dataset.gptBmOwned = "1";
 
         const bookmarkButton = this.createControlButton("bookmark");
-        const hideButton = this.createControlButton("hide");
-
-        controls.append(bookmarkButton, hideButton);
-
         bookmarkButton.addEventListener("click", async (event) => {
           event.stopPropagation();
           const messageKey = node.dataset.gptBmKey;
@@ -212,6 +216,7 @@
           await this.onToggleBookmark({ node, messageKey, bookmarkButton });
         });
 
+        const hideButton = this.createControlButton("hide");
         hideButton.addEventListener("click", async (event) => {
           event.stopPropagation();
           const messageKey = node.dataset.gptBmKey;
@@ -220,6 +225,8 @@
           }
           await this.onHideMessage({ node, messageKey });
         });
+
+        controls.append(bookmarkButton, hideButton);
       }
 
       const nativeActionHost = this.findNativeActionHost(node);
@@ -238,6 +245,11 @@
     }
 
     refresh() {
+      // Don't try to refresh if extension context is invalid
+      if (!chrome.runtime || !chrome.runtime.id) {
+        return;
+      }
+
       const messageNodes = findMessageNodes();
       this.state.nodeByKey.clear();
 

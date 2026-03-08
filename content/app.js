@@ -44,17 +44,27 @@
     }
 
     async loadConversationState(conversationId) {
-      const loaded = await ns.storage.loadConversationState(conversationId);
-      this.state.bookmarks = loaded.bookmarks;
-      this.state.hiddenMessageKeys = loaded.hiddenMessageKeys;
+      try {
+        const loaded = await ns.storage.loadConversationState(conversationId);
+        this.state.bookmarks = loaded.bookmarks;
+        this.state.hiddenMessageKeys = loaded.hiddenMessageKeys;
+      } catch (error) {
+        console.warn("GPT Bookmarks: Failed to load state", error);
+        this.state.bookmarks = [];
+        this.state.hiddenMessageKeys = new Set();
+      }
     }
 
     async persistConversationState() {
-      await ns.storage.persistConversationState(
-        this.state.conversationId,
-        this.state.bookmarks,
-        this.state.hiddenMessageKeys
-      );
+      try {
+        await ns.storage.persistConversationState(
+          this.state.conversationId,
+          this.state.bookmarks,
+          this.state.hiddenMessageKeys
+        );
+      } catch (error) {
+        console.warn("GPT Bookmarks: Failed to persist state", error);
+      }
     }
 
     async toggleBookmarkForNode({ node, messageKey, bookmarkButton }) {
@@ -65,13 +75,34 @@
       if (existingIndex >= 0) {
         this.state.bookmarks.splice(existingIndex, 1);
       } else {
+        // Find the assistant response (next message)
+        const userIndex = Number(node.dataset.gptBmIndex || 0);
+        let assistantNode = null;
+        let assistantMessageKey = null;
+        let assistantPreview = "";
+
+        // Look for the next node with index = userIndex + 1
+        for (const [key, candidateNode] of this.state.nodeByKey.entries()) {
+          const candidateIndex = Number(candidateNode.dataset.gptBmIndex || 0);
+          const candidateRole = candidateNode.dataset.gptBmRole;
+          if (candidateIndex === userIndex + 1 && candidateRole === "system") {
+            assistantNode = candidateNode;
+            assistantMessageKey = key;
+            assistantPreview = candidateNode.dataset.gptBmPreview || "";
+            break;
+          }
+        }
+
         this.state.bookmarks.push({
           conversationId: this.state.conversationId,
           messageKey,
           textPreview: node.dataset.gptBmPreview || "",
-          role: node.dataset.gptBmRole || "system",
-          index: Number(node.dataset.gptBmIndex || 0),
-          createdAt: Date.now()
+          role: node.dataset.gptBmRole || "user",
+          index: userIndex,
+          createdAt: Date.now(),
+          // Add assistant response data
+          assistantMessageKey,
+          assistantPreview
         });
       }
 
@@ -81,8 +112,22 @@
     }
 
     async hideMessage({ node, messageKey }) {
+      // Hide the user message
       this.state.hiddenMessageKeys.add(messageKey);
       this.messageManager.applyHiddenState(node, messageKey);
+
+      // Find and hide the assistant response (next message)
+      const userIndex = Number(node.dataset.gptBmIndex || 0);
+      for (const [key, candidateNode] of this.state.nodeByKey.entries()) {
+        const candidateIndex = Number(candidateNode.dataset.gptBmIndex || 0);
+        const candidateRole = candidateNode.dataset.gptBmRole;
+        if (candidateIndex === userIndex + 1 && candidateRole === "system") {
+          this.state.hiddenMessageKeys.add(key);
+          this.messageManager.applyHiddenState(candidateNode, key);
+          break;
+        }
+      }
+
       await this.persistConversationState();
     }
 
@@ -111,14 +156,37 @@
         return;
       }
 
+      // Unhide the user message if hidden
       if (this.state.hiddenMessageKeys.has(bookmark.messageKey)) {
         this.state.hiddenMessageKeys.delete(bookmark.messageKey);
         this.messageManager.applyHiddenState(node, bookmark.messageKey);
         this.persistConversationState().catch(() => {});
       }
 
+      // Unhide the assistant response if hidden
+      if (bookmark.assistantMessageKey && this.state.hiddenMessageKeys.has(bookmark.assistantMessageKey)) {
+        const assistantNode = this.state.nodeByKey.get(bookmark.assistantMessageKey);
+        if (assistantNode) {
+          this.state.hiddenMessageKeys.delete(bookmark.assistantMessageKey);
+          this.messageManager.applyHiddenState(assistantNode, bookmark.assistantMessageKey);
+          this.persistConversationState().catch(() => {});
+        }
+      }
+
       node.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      // Highlight both user message and assistant response
       node.classList.add("gpt-bm-highlight");
+      if (bookmark.assistantMessageKey) {
+        const assistantNode = this.state.nodeByKey.get(bookmark.assistantMessageKey);
+        if (assistantNode) {
+          assistantNode.classList.add("gpt-bm-highlight");
+          window.setTimeout(() => {
+            assistantNode.classList.remove("gpt-bm-highlight");
+          }, ns.constants.HIGHLIGHT_DURATION_MS);
+        }
+      }
+
       window.setTimeout(() => {
         node.classList.remove("gpt-bm-highlight");
       }, ns.constants.HIGHLIGHT_DURATION_MS);
