@@ -11,6 +11,22 @@
     }
   }
 
+  function isContextInvalidationError(error) {
+    const message =
+      typeof error === "string" ? error : error && typeof error.message === "string"
+        ? error.message
+        : "";
+    return message.toLowerCase().includes("extension context invalidated");
+  }
+
+  function getRuntimeLastError() {
+    try {
+      return chrome.runtime ? chrome.runtime.lastError : null;
+    } catch (e) {
+      return e;
+    }
+  }
+
   function storageGet(key) {
     return new Promise((resolve, reject) => {
       if (!isExtensionContextValid()) {
@@ -20,14 +36,30 @@
 
       try {
         chrome.storage.local.get([key], (result) => {
-          const error = chrome.runtime && chrome.runtime.lastError;
-          if (error) {
-            reject(new Error(error.message));
-            return;
+          try {
+            const error = getRuntimeLastError();
+            if (error) {
+              if (isContextInvalidationError(error)) {
+                resolve(null);
+                return;
+              }
+              reject(new Error(error.message));
+              return;
+            }
+            resolve(result ? result[key] : null);
+          } catch (e) {
+            if (isContextInvalidationError(e)) {
+              resolve(null);
+              return;
+            }
+            reject(e);
           }
-          resolve(result[key]);
         });
       } catch (e) {
+        if (isContextInvalidationError(e)) {
+          resolve(null);
+          return;
+        }
         resolve(null);
       }
     });
@@ -42,14 +74,30 @@
 
       try {
         chrome.storage.local.set(payload, () => {
-          const error = chrome.runtime && chrome.runtime.lastError;
-          if (error) {
-            reject(new Error(error.message));
-            return;
+          try {
+            const error = getRuntimeLastError();
+            if (error) {
+              if (isContextInvalidationError(error)) {
+                resolve();
+                return;
+              }
+              reject(new Error(error.message));
+              return;
+            }
+            resolve();
+          } catch (e) {
+            if (isContextInvalidationError(e)) {
+              resolve();
+              return;
+            }
+            reject(e);
           }
-          resolve();
         });
       } catch (e) {
+        if (isContextInvalidationError(e)) {
+          resolve();
+          return;
+        }
         resolve();
       }
     });

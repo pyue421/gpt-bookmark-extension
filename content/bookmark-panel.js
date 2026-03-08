@@ -3,6 +3,14 @@
 
   const ns = (globalThis.GPTBM = globalThis.GPTBM || {});
 
+  function isExtensionContextValid() {
+    try {
+      return !!(chrome.runtime && chrome.runtime.id);
+    } catch (e) {
+      return false;
+    }
+  }
+
   function formatRoleLabel(role) {
     const normalized = String(role || "")
       .trim()
@@ -237,8 +245,7 @@
       }
 
       // Check if extension context is valid
-      const isContextValid = !!(chrome.runtime && chrome.runtime.id);
-      if (!isContextValid) {
+      if (!isExtensionContextValid()) {
         this.panelEmpty.textContent = "Extension reloaded. Please refresh the page.";
         this.panelEmpty.hidden = false;
         this.panelList.innerHTML = "";

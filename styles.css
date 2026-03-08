@@ -209,17 +209,17 @@ html:not(.dark) #gpt-bm-panel-root .gpt-bm-item-remove:hover {
 }
 
 html:not(.dark) .gpt-bm-btn {
-  color: #6e6e80;
+  color: #5D5D5D;
 }
 
 html:not(.dark) .gpt-bm-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: #2d2d2d;
+  background: #E8E8E8;
+  color: #5D5D5D;
 }
 
 html:not(.dark) .gpt-bm-btn.gpt-bm-active {
-  color: var(--gpt-bm-accent);
-  background: rgba(14, 159, 130, 0.12);
+  color: #5D5D5D;
+  background: #E8E8E8;
 }
 
 .gpt-bm-message {
@@ -231,11 +231,11 @@ html:not(.dark) .gpt-bm-btn.gpt-bm-active {
   top: 8px;
   right: 8px;
   display: flex;
-  gap: 6px;
+  gap: 2px;
   opacity: 0;
   transform: translateY(-2px);
   transition: opacity 140ms ease, transform 140ms ease;
-  z-index: 30;
+  z-index: 400;
 }
 
 .gpt-bm-message:hover > .gpt-bm-controls {
@@ -244,21 +244,21 @@ html:not(.dark) .gpt-bm-btn.gpt-bm-active {
 }
 
 .gpt-bm-controls.gpt-bm-controls-inline {
-  position: static;
+  position: relative;
   top: auto;
   right: auto;
   opacity: 1;
   transform: none;
   transition: none;
-  margin-left: 6px;
-  z-index: auto;
+  margin-left: 2px;
+  z-index: 500;
 }
 
 .gpt-bm-btn {
   appearance: none;
   border: none;
   background: transparent;
-  color: #ececec;
+  color: #5D5D5D;
   border-radius: 6px;
   cursor: pointer;
   width: 30px;
@@ -269,17 +269,77 @@ html:not(.dark) .gpt-bm-btn.gpt-bm-active {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  isolation: isolate;
   transition: background-color 0.15s ease;
+  z-index: 501;
 }
 
 .gpt-bm-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background: #E8E8E8;
+  color: #5D5D5D;
 }
 
 .gpt-bm-btn.gpt-bm-active {
-  color: var(--gpt-bm-accent);
-  background: rgba(78, 201, 167, 0.15);
+  color: #5D5D5D;
+  background: #E8E8E8;
+}
+
+.gpt-bm-btn::after {
+  content: attr(data-gpt-bm-tooltip);
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  transform: translateX(-50%) translateY(-4px);
+  opacity: 0;
+  pointer-events: none;
+  background: #000000;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+  z-index: 1000;
+}
+
+.gpt-bm-btn:hover::after,
+.gpt-bm-btn:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.gpt-bm-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.gpt-bm-icon-bookmark path {
+  fill: transparent;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+.gpt-bm-btn-bookmark.gpt-bm-active .gpt-bm-icon-bookmark path {
+  fill: currentColor;
+}
+
+.gpt-bm-icon-trash path {
+  fill: currentColor;
+  transition: fill 0.15s ease;
+}
+
+.gpt-bm-icon-trash {
+  width: 20px;
+  height: 20px;
 }
 
 .gpt-bm-hidden {
